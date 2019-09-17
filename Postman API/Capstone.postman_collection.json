@@ -1,0 +1,276 @@
+{
+	"info": {
+		"_postman_id": "8e1fa0d6-3fea-4d92-ace2-4beb66be4e80",
+		"name": "Capstone",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Index",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PostData",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"value\": \"21\",\n        \"time\": \"2019-09-15T18:47:28.474083\",\n        \"sensor_id\": \"5\"\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/data/temperature",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"data",
+						"temperature"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "PostData",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"value\": \"21\",\n        \"time\": \"2019-09-15T18:47:28.474083\",\n        \"sensor_id\": \"5\"\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/data/temperature",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"data",
+								"temperature"
+							]
+						}
+					},
+					"_postman_previewlanguage": null,
+					"header": null,
+					"cookie": [],
+					"body": null
+				}
+			]
+		},
+		{
+			"name": "GetData",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/data/temperature?end=2019-09-17T18:47:18.474083",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"data",
+						"temperature"
+					],
+					"query": [
+						{
+							"key": "end",
+							"value": "2019-09-17T18:47:18.474083"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "GetData, TimeSeries2",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/data/temperature?start=2019-09-14T18:47:18.474083",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"data",
+								"temperature"
+							],
+							"query": [
+								{
+									"key": "start",
+									"value": "2019-09-14T18:47:18.474083"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "178"
+						},
+						{
+							"key": "Server",
+							"value": "Werkzeug/0.15.6 Python/3.7.2"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 17 Sep 2019 00:30:08 GMT"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"sensor_id\": \"4\",\n        \"time\": \"2019-09-16T18:47:28.474083\",\n        \"type\": \"temperature\",\n        \"value\": \"21\"\n    },\n    {\n        \"sensor_id\": \"5\",\n        \"time\": \"2019-09-15T18:47:28.474083\",\n        \"type\": \"temperature\",\n        \"value\": \"21\"\n    }\n]"
+				},
+				{
+					"name": "GetData, TimeSeries",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/data/temperature?end=2019-09-16T18:47:28.474083&start=2019-09-16T18:47:18.474083",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"data",
+								"temperature"
+							],
+							"query": [
+								{
+									"key": "end",
+									"value": "2019-09-16T18:47:28.474083"
+								},
+								{
+									"key": "start",
+									"value": "2019-09-16T18:47:18.474083"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "842"
+						},
+						{
+							"key": "Server",
+							"value": "Werkzeug/0.15.6 Python/3.7.2"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 17 Sep 2019 00:17:26 GMT"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"sensor_id\": 3,\n        \"time\": \"2019-09-16T18:47:27.474083\",\n        \"type\": \"temperature\",\n        \"value\": 17\n    },\n    {\n        \"sensor_id\": 2,\n        \"time\": \"2019-09-16T18:47:26.474083\",\n        \"type\": \"temperature\",\n        \"value\": 22\n    },\n    {\n        \"sensor_id\": 3,\n        \"time\": \"2019-09-16T18:47:25.474083\",\n        \"type\": \"temperature\",\n        \"value\": 18\n    },\n    {\n        \"sensor_id\": 3,\n        \"time\": \"2019-09-16T18:47:24.474083\",\n        \"type\": \"temperature\",\n        \"value\": 21\n    },\n    {\n        \"sensor_id\": 1,\n        \"time\": \"2019-09-16T18:47:23.474083\",\n        \"type\": \"temperature\",\n        \"value\": 22\n    },\n    {\n        \"sensor_id\": 1,\n        \"time\": \"2019-09-16T18:47:22.474083\",\n        \"type\": \"temperature\",\n        \"value\": 18\n    },\n    {\n        \"sensor_id\": 3,\n        \"time\": \"2019-09-16T18:47:21.474083\",\n        \"type\": \"temperature\",\n        \"value\": 20\n    },\n    {\n        \"sensor_id\": 0,\n        \"time\": \"2019-09-16T18:47:20.474083\",\n        \"type\": \"temperature\",\n        \"value\": 24\n    },\n    {\n        \"sensor_id\": 1,\n        \"time\": \"2019-09-16T18:47:19.474083\",\n        \"type\": \"temperature\",\n        \"value\": 17\n    },\n    {\n        \"sensor_id\": 1,\n        \"time\": \"2019-09-16T18:47:18.474083\",\n        \"type\": \"temperature\",\n        \"value\": 17\n    }\n]"
+				},
+				{
+					"name": "GetData, TimeSeries3",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/data/temperature?end=2019-09-17T18:47:18.474083",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"data",
+								"temperature"
+							],
+							"query": [
+								{
+									"key": "end",
+									"value": "2019-09-17T18:47:18.474083"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Content-Length",
+							"value": "178"
+						},
+						{
+							"key": "Server",
+							"value": "Werkzeug/0.15.6 Python/3.7.2"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 17 Sep 2019 00:30:38 GMT"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"sensor_id\": \"4\",\n        \"time\": \"2019-09-16T18:47:28.474083\",\n        \"type\": \"temperature\",\n        \"value\": \"21\"\n    },\n    {\n        \"sensor_id\": \"5\",\n        \"time\": \"2019-09-15T18:47:28.474083\",\n        \"type\": \"temperature\",\n        \"value\": \"21\"\n    }\n]"
+				}
+			]
+		}
+	]
+}
