@@ -1,28 +1,26 @@
-import json
-from typing import List, Dict
-
 from pymongo import MongoClient
-import tempfile
+from pymongo.collection import Collection
 
-# TODO: Move away from JSON
-JSON_FILE = tempfile.NamedTemporaryFile(delete=False)
+from datastructures import Datum, TimeRange
 
 
 class DatabaseClient:
+    collection: Collection
+
     def __init__(self):
-        pass
+        self.client = MongoClient(host='localhost', port=27017)
+        self.db = self.client.envHubStorage
+        self.collection = self.db.data
 
-    def insert(self, datum: dict):
-        data = json.load(JSON_FILE)
-        data.append(datum)
-        json.dump(data, JSON_FILE)
+    def insert(self, *datums: Datum) -> None:
+        if len(datums) == 1:
+            self.collection.insert_one(datums[0].to_dict())
+        else:
+            self.collection.insert_many([d.to_dict() for d in datums])
 
-    def get(self, filters: Dict[str, callable]):
-        data = json.load(JSON_FILE)
-        returned = []
-        for datum in data:
-            for key, condition in filters.items():
-                if condition(datum.get(key, None)):
-                    returned.append(datum)
-
-        return returned
+    def find(self, filters=None, rang: TimeRange = None):
+        if filters is None:
+            filters = {}
+        if rang:
+            filters.update(Datum.mongo_filter_by_dates(rang))
+        return [Datum.from_dict(d) for d in self.collection.find(filters)]
