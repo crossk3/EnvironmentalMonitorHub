@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.widget.RelativeLayout;
 
 import com.jjoe64.graphview.series.DataPoint;
@@ -15,7 +16,6 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import hansonstudio.com.myapplication.Graph;
 import hansonstudio.com.myapplication.R;
 import hansonstudio.com.myapplication.TextElement;
-import hansonstudio.com.myapplication.UpdateGraph;
 import hansonstudio.com.myapplication.Values.Colours;
 import hansonstudio.com.myapplication.Values.TextSizes;
 import hansonstudio.com.myapplication.Values.UnicodeIcons;
@@ -47,12 +47,17 @@ public class Temperature extends AppCompatActivity{
         refreshButton.element.setTextColor(Colours.ganttChartBlue);
         refreshButton.element.setTypeface(null, Typeface.BOLD);
 
-        SpannableString tempString = new SpannableString("Latest Temperature Reading\n" + getCurrentTemp() + "°C");
+        String rawTemp = getCurrentTemp() + "";
+        SpannableString tempString = new SpannableString("Latest Reading\n" + rawTemp + "°C\n09/11/2001|04:20");
 
         tempString.setSpan(
                 new ForegroundColorSpan(Colours.getThresholdColour(getCurrentTemp(),
                         lowerTempThreshold, upperTempThreshold)),
-                26,tempString.length(), 0);
+                15,17 + rawTemp.length(), 0);
+        tempString.setSpan(
+                new RelativeSizeSpan(1.4f), 15,17 + rawTemp.length(), 0);
+        tempString.setSpan(
+                new RelativeSizeSpan(0.7f), 17+rawTemp.length(),tempString.length(), 0);
 
         TextElement tempDisplay = new TextElement(this, myLayout, "",
                 new Point(0,ViewLayout.getScreenHeight()/8), new Point(ViewLayout.getScreenWidth(), -2));
@@ -60,12 +65,11 @@ public class Temperature extends AppCompatActivity{
         tempDisplay.element.setText(tempString);
 
         Graph graph = new Graph(this, myLayout,
-                new Point(0, ViewLayout.getScreenHeight()/4),
+                new Point(0, ViewLayout.getScreenHeight()*2/7),
                 new Point(14*ViewLayout.getScreenWidth()/15, 4*ViewLayout.getScreenHeight()/5),
         "    History");
 
         graph.populate(getDataSeries(0));
-        //UpdateGraph temperature = new UpdateGraph(graph, tempDisplay);
     }
 
     private float getCurrentTemp()
