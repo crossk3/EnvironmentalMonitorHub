@@ -2,7 +2,7 @@
 
 //Click here to get the library: http://librarymanager/All#SparkFun_SCD30
 //#include <Wire.h>
-#include "SparkFun_SCD30_Arduino_Library.h" 
+#include "SparkFun_SCD30_Arduino_Library_Teensy.h" 
 //
 //uint8_t SCD30_I2C_ADDR = 0x61;
 //long SCD30_CONT_READ_MODE = 0x0010;
