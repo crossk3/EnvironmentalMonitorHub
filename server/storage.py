@@ -8,7 +8,7 @@ class DatabaseClient:
     collection: Collection
 
     def __init__(self):
-        self.client = MongoClient("mongodb+srv://admin:admin@testclusterkcross-cm734.mongodb.net/admin?retryWrites=true&w=majority")
+        self.client = MongoClient('localhost', 27017, username='root', password='example')
 
         self.db = self.client.envHubStorage
         self.collection = self.db.data
