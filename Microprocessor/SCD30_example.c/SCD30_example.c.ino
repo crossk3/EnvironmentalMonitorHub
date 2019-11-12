@@ -12,18 +12,6 @@ int SDA_PIN = 18;
 int SCL_PIN = 19;
 SCD30 airSensor;
 
-//#define MEM_LEN 256
-//uint8_t databuf[MEM_LEN];
-//volatile uint8_t received;
-
-//unsigned long communicate_with_i2c(uint8_t addr, long comm){
-//
-//  Wire.finish();                  // finish any prev non-blocking Tx
-//  Wire.beginTransmission(addr);   // init for Tx send  
-//  Wire.write(databuf, sizeof(comm));     // send to Tx buffer
-//  Wire.sendTransmission();        // Send Tx data to Slave (non-blocking)
-//}
-
 void setup() {
   // put your setup code here, to run once:
   delay(2000);
@@ -52,16 +40,13 @@ void setup() {
   airSensor.begin();
   pinMode(led, OUTPUT);
   digitalWrite(led, HIGH);
-  airSensor.setAltitudeCompensation(200); //Set altitude of the sensor in m
+  airSensor.setAltitudeCompensation(241); //Set altitude of the sensor in m
   airSensor.setMeasurementInterval(2);
 }
 
 void loop() {
   if (airSensor.dataAvailable())
   {   
-//    digitalWrite(led, LOW);
-//    delay(100);
-//    digitalWrite(led, HIGH);
     Serial.print("co2(ppm):");
     Serial.print(airSensor.getCO2());
 

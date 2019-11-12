@@ -11,7 +11,7 @@ storage_client = DatabaseClient()
 server = Flask(__name__)
 
 
-@server.route('/')
+@server.route('/', methods=['GET'])
 def landing_page():
     with open('html/landing_page.html', 'r') as f:
         html = f.read()
