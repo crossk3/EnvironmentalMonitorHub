@@ -1,6 +1,6 @@
 /*
 
-Arduino library for ADXL355 Colour Temperature Sensor
+Arduino library for ADXL355 Accelerometer
 
 ---
 
@@ -26,37 +26,52 @@ THE SOFTWARE.
 
 */
 
-#ifndef ADXL355
-#define ADXL355
+#ifndef __ADXL335_H__
+#define __ADXL335_H__
 
-#define XDATA3 0x14;
-#define XDATA2 0x15;
-#define XDATA1 0x16;
-#define YDATA3 0x17;
-#define YDATA2 0x18;
-#define YDATA1 0x19;
-#define ZDATA3 0x1A;
-#define ZDATA2 0x1B;
-#define ZDATA1 0x1C;
+#define XDATA3 0x08
+#define XDATA2 0x09
+#define XDATA1 0x0A
+#define YDATA3 0x0B
+#define YDATA2 0x0C
+#define YDATA1 0x0D
+#define ZDATA3 0x0E
+#define ZDATA2 0x0F
+#define ZDATA1 0x10
+#define FIFO_DATA 0x11
 
-#define RANGE_2G 0x01;
-#define RANGE_4G 0x02;
-#define RANGE_8G 0x03;
-#define MEASURE_MODE 0x06;
+#define OFFSET_X_H 0x1E
+#define OFFSET_X_L 0x1F
+#define OFFSET_Y_H 0x20
+#define OFFSET_Y_L 0x21
+#define OFFSET_Z_H 0x22
+#define OFFSET_Z_L 0x23
 
-#define READ_BYTE 0x01;
-#define WRITE_BYTE 0x00;
+#define ACT_EN 0x24
+#define ACT_THRESH_H 0x25
+#define ACT_THRESH_L 0x26
+#define ACT_COUNT 0x27
 
-#define EN_REG_ADDR 0x00;
+#define FILTER 0x28
 
-#define CMD_BASE 0x1 << 7;
+#define RANGE 0x2C
+#define POWER_CTL 0x2D
 
-#define CMD_AUTO_INCR (0x1 << 5); //set CMD register to AUTO INCREMENT mode
-#define CMD_REPEATED_READ (0x0 << 5); // set CMD register to REPEATED mode
-#define CMD_SPECIAL_FUNC (0x3 << 5);
+#define RANGE_2G 0x01
+#define RANGE_4G 0x02
+#define RANGE_8G 0x03
+#define MEASURE_MODE 0x06 // accelerometer only mode
+#define READ_BYTE 0x01
+#define WRITE_BYTE 0x00
 
-#define ADD_MASK 0x1F;
-#define AVALID_MASK 0x1;
+//#define EN_REG_ADDR 0x00;
+
+//#define CMD_AUTO_INCR (0x1 << 5); //set CMD register to AUTO INCREMENT mode
+//#define CMD_REPEATED_READ (0x0 << 5); // set CMD register to REPEATED mode
+//#define CMD_SPECIAL_FUNC (0x3 << 5);
+
+//#define ADD_MASK 0x1F;
+//#define AVALID_MASK 0x1;
 
 #include <Arduino.h>
 
@@ -88,22 +103,12 @@ THE SOFTWARE.
 //} OPT3001_ER;
 //
 //
-//typedef union {
-//	struct {
-//		uint8_t FaultCount : 2;
-//		uint8_t MaskExponent : 1;
-//		uint8_t Polarity : 1;
-//		uint8_t Latch : 1;
-//		uint8_t FlagLow : 1;
-//		uint8_t FlagHigh : 1;
-//		uint8_t ConversionReady : 1;
-//		uint8_t OverflowFlag : 1;
-//		uint8_t ModeOfConversionOperation : 2;
-//		uint8_t ConvertionTime : 1;
-//		uint8_t RangeNumber : 4;
-//	};
-//	uint16_t rawData;
-//} OPT3001_Config;
+typedef union {
+	struct {
+		uint8_t FaultCount : 2;
+	};
+	uint16_t rawData;
+} ADXL355_Config;
 //
 struct ADXL355_Result {
 	uint32_t xdata;
@@ -115,15 +120,29 @@ class ADXL355 {
 public:
 	ADXL355();
 
-	void begin(uint8_t address, i2c_t3 &wirePort = Wire);
+	void begin(uint8_t address, i2c_t3 &wirePort = Wire, uint8_t range = RANGE_2G);
+	bool setRange(uint8_t range);
 
 	ADXL355_Result readResult();
 
 private:
 	uint8_t _address;
 	i2c_t3 *_i2cPort;
-	bool ADXL355::_readData(uint16_t* data);
+	bool _readData(uint32_t* data);
 };
+
+//class ADXL335
+//{
+//private:
+//    void pinsInit();
+//    float scale;
+//public:
+//    void begin();
+//    void getXYZ(int16_t *x,int16_t *y,int16_t *z);
+//    void getAcceleration(float *ax,float *ay,float *az);
+//};
+
 
 
 #endif 
+

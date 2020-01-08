@@ -33,15 +33,14 @@ ADXL355::ADXL355()
 {
 }
 
-void ADXL355::begin(uint8_t address, i2c_t3 &wirePort = Wire) {
+void ADXL355::begin(uint8_t address, i2c_t3 &wirePort = Wire, uint8_t range = RANGE_2G) {
 	_address = address;
 	_i2cPort = &wirePort;
 	_i2cPort->begin();
+	this->setRange(range);
 	_i2cPort->beginTransmission(_address);
-	_i2cPort->write(EN_REG_ADDR);
-	_i2cPort->write(EN_REG_PON);
-	delay(3);
-	_i2cPort->write(EN_REG_AEN);
+	_i2cPort->write(POWER_CTL);
+	_i2cPort->write(MEASURE_MODE);
 	_i2cPort->endTransmission(true);
 }
 
@@ -50,20 +49,23 @@ ADXL355_Result ADXL355::readResult() {
 	_i2cPort->beginTransmission(_address);
 	_i2cPort->write(XDATA3);
 	_i2cPort->endTransmission(true);
-	uint8_t* xdata[3];
-	uint8_t* ydata[3];
-	uint8_t* zdata[3];
-	this->readData(xdata);
-	result.xdata = ((uint32_t)xdata[0] << 12) | ((uint32_t)xdata[1] << 4) | ((uint32_t)xdata[2] >> 4);
-    this->readData(ydata);
-    result.ydata = ((uint32_t)ydata[0] << 12) | ((uint32_t)ydata[1] << 4) | ((uint32_t)ydata[2] >> 4);
-	this->readData(zdata);
-    result.zdata = ((uint32_t)zdata[0] << 12) | ((uint32_t)zdata[1] << 4) | ((uint32_t)zdata[2] >> 4);
+	this->_readData(&result.xdata);
+	this->_readData(&result.ydata);
+	this->_readData(&result.zdata);
 	return result;
 }
+bool ADXL355::setRange(uint8_t range){
+    _i2cPort->beginTransmission(_address);
+    _i2cPort->write(RANGE);
+    _i2cPort->write(range | B10000000);
+    _i2cPort->endTransmission(true);
+    return true;
+}
 
-bool ADXL355::_readData(uint16_t* data)
+bool ADXL355::_readData(uint32_t* data)
 {
+    uint32_t twosComp;
+	uint8_t buf[3];
 	_i2cPort->requestFrom(_address, (uint8_t)3);
 
 	int counter = 0;
@@ -75,7 +77,12 @@ bool ADXL355::_readData(uint16_t* data)
 			return false;
 	}
 
-	_i2cPort->readBytes(*data, 3);
+	_i2cPort->readBytes(buf, 3);
+	*data = (buf[0] << 12) | (buf[1] << 4) | (buf[2] >> 4);
+    // we're getting real results, but we need to do calibrations and stuff now
+    //two's complement is apparently needed too.
 
 	return true;
 }
+
+
