@@ -3,6 +3,7 @@
 //Click here to get the library: http://librarymanager/All#SparkFun_SCD30
 //#include <Wire.h>
 #include "SparkFun_SCD30_Arduino_Library_Teensy.h"
+#include "ClosedCube_OPT3001.h"
 //
 //uint8_t SCD30_I2C_ADDR = 0x61;
 //long SCD30_CONT_READ_MODE = 0x0010;
@@ -11,6 +12,7 @@ int led = 13;
 int SDA_PIN = 18;
 int SCL_PIN = 19;
 SCD30 airSensor;
+ClosedCube_OPT3001 luxSensor;
 
 void setup() {
   // put your setup code here, to run once:
@@ -36,12 +38,28 @@ void setup() {
         Serial.println(Wire.status());
         break;
     }
-  Serial.println("SCD30 Example");
+  Serial.println("SCD30");
+  
   airSensor.begin();
   pinMode(led, OUTPUT);
   digitalWrite(led, HIGH);
   airSensor.setAltitudeCompensation(241); //Set altitude of the sensor in m
   airSensor.setMeasurementInterval(2);
+  configureLuxSensor(0x45);
+}
+
+void configureLuxSensor(uint8_t addr){
+  luxSensor.begin(addr);
+  OPT3001_Config newConfig;
+  newConfig.RangeNumber = B1100;  
+  newConfig.ConvertionTime = B0;
+  newConfig.Latch = B1;
+  newConfig.ModeOfConversionOperation = B11;
+  OPT3001_ErrorCode errorConfig = luxSensor.writeConfig(newConfig);
+  if (errorConfig != NO_ERROR){
+    Serial.print("OPT3001: [ERROR] Code #");
+    Serial.println(errorConfig);
+  }
 }
 
 void loop() {
@@ -57,10 +75,21 @@ void loop() {
     Serial.print(airSensor.getHumidity(), 1);
 
     Serial.println();
+  }else{
+    Serial.println("No SCD Data");
   }
-  else
-    Serial.println("No data");
+  
+  OPT3001 result = luxSensor.readResult();
+  if (result.error == NO_ERROR){
+    Serial.print("OPT3001: ");
+    Serial.print(result.lux);
+    Serial.println(" lux");
+  }
+  else {
+    Serial.print("OPT3001: [ERROR] Code #");
+    Serial.println(result.error);
+  }
 
-  delay(1000);
+  delay(2000);
   
 }
