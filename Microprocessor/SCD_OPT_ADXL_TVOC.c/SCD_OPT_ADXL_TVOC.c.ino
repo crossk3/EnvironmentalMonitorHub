@@ -17,66 +17,23 @@ int SCL_PIN = 19;
 SCD30 airSensor;
 ClosedCube_OPT3001 luxSensor;
 ADXL355 accelerometer;
-CCS811 mySensor(CCS811_ADDR);
+CCS811 ccs811(CCS811_ADDR);
 
 void setup() {
   // put your setup code here, to run once:
   delay(2000);
   Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 50000);
   delay(2000);
-
-  // confirm we can ACK over to the I2C sensor
-  Wire.beginTransmission(0x61);
-  Wire.sendTransmission();
-  Wire.finish();
   
   Serial.begin(9600);
-  switch(Wire.status())
-    {
-    case I2C_WAITING:  
-        Serial.println("Addr: 0x61 ACK");
-        break;
-    case I2C_ADDR_NAK: 
-        Serial.println("Addr: 0x61 NACK"); 
-        break;
-    default:
-        Serial.println(Wire.status());
-        break;
-    }
-  Serial.println("ADXL");
-
-  Wire.beginTransmission(0x1D);
-  Wire.sendTransmission();
-  Wire.finish();
   
-  Serial.begin(9600);
-  switch(Wire.status())
-    {
-    case I2C_WAITING:  
-        Serial.println("Addr: 0x1D ACK");
-        break;
-    case I2C_ADDR_NAK: 
-        Serial.println("Addr: 0x1D NACK"); 
-        break;
-    default:
-        Serial.println(Wire.status());
-        break;
-    }
-  
-  airSensor.begin();
   pinMode(led, OUTPUT);
   digitalWrite(led, HIGH);
-  airSensor.setAltitudeCompensation(241); //Set altitude of the sensor in m
-  airSensor.setMeasurementInterval(2);
+  
   configureLuxSensor(0x45);
-  accelerometer.begin(0x1D, Wire, RANGE_8G);
-
-  CCS811Core::status returnCode = mySensor.begin(Wire);
-  if (returnCode != CCS811Core::SENSOR_SUCCESS)
-  {
-    Serial.println(".begin() returned with an error.");
-    while (1); //Hang if there was a problem.
-  }
+  configureAccelerometer(0x1D, RANGE_8G);
+  configureSCD30();
+  configureCCS811();
 }
 
 void configureLuxSensor(uint8_t addr){
@@ -93,6 +50,36 @@ void configureLuxSensor(uint8_t addr){
   }
 }
 
+float readLuxSensor(){
+  OPT3001 result = luxSensor.readResult();
+  if (result.error == NO_ERROR){
+    return result.lux;
+  }
+  else {
+    Serial.print("OPT3001: [ERROR] Code #");
+    Serial.println(result.error);
+    return 0;
+  }
+}
+
+void configureAccelerometer(uint8_t addr, uint8_t range){
+  accelerometer.begin(addr, Wire, range);
+}
+
+void configureSCD30(){
+  airSensor.begin();
+  airSensor.setAltitudeCompensation(241); //Set altitude of the sensor in m
+  airSensor.setMeasurementInterval(2);
+}
+
+
+
+void configureCCS811(){
+  CCS811Core::status returnCode = ccs811.begin(Wire);
+  if (returnCode != CCS811Core::SENSOR_SUCCESS)
+    Serial.println("CCS811.begin() returned with an error.");
+}
+
 void loop() {
   if (airSensor.dataAvailable())
   {   
@@ -107,17 +94,9 @@ void loop() {
   }else{
     Serial.println("No SCD Data");
   }
-  
-  OPT3001 result = luxSensor.readResult();
-  if (result.error == NO_ERROR){
-    Serial.print("OPT3001: ");
-    Serial.print(result.lux);
-    Serial.println(" lux");
-  }
-  else {
-    Serial.print("OPT3001: [ERROR] Code #");
-    Serial.println(result.error);
-  }
+  int lux = readLuxSensor();
+  Serial.print("Lux: ");
+  Serial.println(lux);
   ADXL355_Result accel;
   int xavg = 0;
   int yavg = 0;
@@ -136,14 +115,14 @@ void loop() {
   Serial.println(yavg/num_samples);
   Serial.print("zdata: ");
   Serial.println(zavg/num_samples);
-  if (mySensor.dataAvailable())
+  if (ccs811.dataAvailable())
   {
     //If so, have the sensor read and calculate the results.
     //Get them later
-    mySensor.readAlgorithmResults();
+    ccs811.readAlgorithmResults();
     Serial.print("tVOC[");
     //Returns calculated TVOC reading
-    Serial.print(mySensor.getTVOC());
+    Serial.print(ccs811.getTVOC());
     Serial.println("]");
     Serial.println();
     Serial.println();
