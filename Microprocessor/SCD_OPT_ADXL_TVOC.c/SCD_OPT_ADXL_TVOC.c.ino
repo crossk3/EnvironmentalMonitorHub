@@ -27,6 +27,8 @@
 const char mySSID[] = "TP-LINK_365440";
 const char myPSK[] = "";
 
+// This is needed to sync the clock over the network, but because we're doing a local network without internet access,
+// there's no connection. We need to think about this.
 WiFiUDP Udp;
 unsigned int localPort = 8888;  // local port to listen for UDP packets
 static const char ntpServerName[] = "us.pool.ntp.org";
@@ -164,6 +166,7 @@ void loop() {
   int lux = readLuxSensor();
   Serial.print("Lux: ");
   Serial.println(lux);
+  // currently just taking a basic average, we also need to think about this
   ADXL355_Result accel;
   int xavg = 0;
   int yavg = 0;
@@ -197,20 +200,37 @@ void loop() {
 }
 
 
-char* generate_data_string(float temperature, char datum[]){
+char* generate_data_string(float temperature, int lux, float humidity, uint16_t tvoc, uint16_t co2, char datum[]){
   char sensor_id[2] = "1";
+  // FUCKING FIXME
   char timestamp[32] = "2019-11-29T13:21:01";
+  String tvoc_d = String(tvoc);
+  String co2_d = String(co2);
+  String lux_d = String(lux);
+  String humidity_d = String(humidity);
 //  get_iso_timestamp(timestamp);
 // FUCKING FIXME
   append_word(datum, "{\"sensor_id\": ");
   append_word(datum, sensor_id);
   append_word(datum, ", \"time\": \"");
   append_word(datum, timestamp);
-  append_word(datum, "\", \"data\": [{\"type\": \"temperature\", \"value\": ");
+  append_word(datum, "\", \"data\": [")
+
+  append_word(datum, "{\"type\": \"temperature\", \"value\": ");
   char temp[8];
   dtostrf(temperature, 4, 1, temp) ;
   append_word(datum, temp);
-  append_word(datum, "}]}");
+  append_word(datum, "},");
+
+  append_word(datum, "{\"type\": \"tvoc\", \"value\": " + tvoc_d + "},");
+
+  append_word(datum, "{\"type\": \"co2\", \"value\": " + co2_d + "},");
+
+  append_word(datum, "{\"type\": \"lux\", \"value\": " + lux_d + "},");
+
+  append_word(datum, "{\"type\": \"humidity\", \"value\": " + humidity_d + "}");
+
+  append_word(datum, "]}");
   return datum;
 }
 
