@@ -153,10 +153,6 @@ void loop() {
 
     Serial.print("temp(C):");
     Serial.println(airSensor.getTemperature(), 1);
-    char datum[256];
-    generate_data_string(airSensor.getTemperature(), datum);
-    strcpy(datum, strstr(datum, "{\"sensor"));
-    request_post(client, destServer, 8080, "/data", datum);
     
     Serial.print("humidity(%):");
     Serial.println(airSensor.getHumidity(), 1);
@@ -190,13 +186,17 @@ void loop() {
     //If so, have the sensor read and calculate the results.
     //Get them later
     ccs811.readAlgorithmResults();
-    Serial.print("tVOC[");
+    //Serial.print("tVOC[");
     //Returns calculated TVOC reading
-    Serial.print(ccs811.getTVOC());
-    Serial.println("]");
-    Serial.println();
-    Serial.println();
+    //Serial.print(ccs811.getTVOC());
+    //Serial.println("]");
+    //Serial.println();
+    //Serial.println();
   }
+    char datum[256];
+    generate_data_string(airSensor.getTemperature(), lux, airSensor.getHumidity(), ccs811.getTVOC(), airSensor.getCO2(), datum);
+    strcpy(datum, strstr(datum, "{\"sensor"));
+    request_post(client, destServer, 8080, "/data", datum);
 }
 
 
