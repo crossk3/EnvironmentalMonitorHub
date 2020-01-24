@@ -35,6 +35,7 @@ def upload_data_handler(data_type):
     :param data_type:
     :return:
     """
+    print(request.get_data())
     body = request.json
     data = []
     for datum in body:
@@ -52,6 +53,7 @@ def data_handler(data_type):
     :return:
     """
     query = dict(request.args)
+    query['type'] = data_type
     time_start = query.pop('start', None)
     if time_start:
         time_start = datetime.fromisoformat(time_start)
@@ -65,7 +67,9 @@ def data_handler(data_type):
 @server.route('/data', methods=['POST'])
 def bulk_data_handler():
     body = request.json
-    data = [Datum.from_dict(datum) for datum in body]
+    time = body['time']
+    sensor_id = body['sensor_id']
+    data = [Datum.from_dict({**datum, 'time': time, 'sensor_id': sensor_id}) for datum in body['data']]
     storage_client.insert(*data)
     return ''
 

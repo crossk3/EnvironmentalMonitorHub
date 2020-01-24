@@ -77,7 +77,7 @@ class Datum:
     def from_dict(cls, data):
         data.pop('_id', None)
         typ = data.pop('type')
-        units = data.pop('units')
+        units = data.pop('units', None)
         klass = _subclasses.get(typ, cls)
         return klass(**data)
 
