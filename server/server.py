@@ -80,4 +80,4 @@ def timeseries_handler():
     Handles retrieving data by time, i.e. can query for all types of data at a given moment
     :return:
     """
-    pass
+    return jsonify([d.to_dict() for d in storage_client.find()])

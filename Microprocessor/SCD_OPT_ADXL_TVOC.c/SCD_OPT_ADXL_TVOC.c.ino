@@ -39,10 +39,16 @@ void sendNTPpacket(IPAddress &address);
 //////////////////
 // HTTP Strings //
 //////////////////
-const char destServer[] = "192.168.0.100";
+const char destServer[] = "192.168.0.101";
 
 
 ESP8266Client client;
+
+
+// how many minutes to delay between samples
+float sample_delay = (1/15);
+// start off with sending a sample
+int total_delay = int(sample_delay * 60 * 1000);
 
 void scrolling_append(char* s, char c){
     strcpy(s, s+1);
@@ -146,22 +152,13 @@ void configureCCS811(){
 }
 
 void loop() {
-  if (airSensor.dataAvailable())
-  {   
-    Serial.print("co2(ppm):");
-    Serial.println(airSensor.getCO2());
-
-    Serial.print("temp(C):");
-    Serial.println(airSensor.getTemperature(), 1);
-    
-    Serial.print("humidity(%):");
-    Serial.println(airSensor.getHumidity(), 1);
-  }else{
-    Serial.println("No SCD Data");
+  while(!airSensor.dataAvailable())
+  {
+    delay(50);
+    total_delay += 50;
   }
+  
   int lux = readLuxSensor();
-  Serial.print("Lux: ");
-  Serial.println(lux);
   // currently just taking a basic average, we also need to think about this
   ADXL355_Result accel;
   int xavg = 0;
@@ -174,6 +171,7 @@ void loop() {
     yavg += accel.ydata;
     zavg += accel.zdata;
     delay(2000/num_samples);
+    total_delay += (2000/num_samples);
   }
   Serial.print("xdata: ");
   Serial.println(xavg/num_samples);
@@ -181,22 +179,28 @@ void loop() {
   Serial.println(yavg/num_samples);
   Serial.print("zdata: ");
   Serial.println(zavg/num_samples);
-  if (ccs811.dataAvailable())
+  while (!ccs811.dataAvailable())
   {
-    //If so, have the sensor read and calculate the results.
-    //Get them later
-    ccs811.readAlgorithmResults();
-    //Serial.print("tVOC[");
-    //Returns calculated TVOC reading
-    //Serial.print(ccs811.getTVOC());
-    //Serial.println("]");
-    //Serial.println();
-    //Serial.println();
+    delay(2);
+    total_delay += 2;
   }
+  //If so, have the sensor read and calculate the results.
+  //Get them later
+  ccs811.readAlgorithmResults();
+  if(total_delay >= sample_delay*60*1000)
+  {
+    Serial.println("Uploading Sample");
     char datum[256];
     generate_data_string(airSensor.getTemperature(), lux, airSensor.getHumidity(), ccs811.getTVOC(), airSensor.getCO2(), datum);
     strcpy(datum, strstr(datum, "{\"sensor"));
     request_post(client, destServer, 8080, "/data", datum);
+    Serial.print("Sent! Waiting for ");
+    Serial.print(sample_delay*59*1000);
+    Serial.println(" ms!");
+    delay(sample_delay*59*1000);
+    total_delay = (sample_delay*59*1000);
+  }
+  Serial.println(sample_delay);
 }
 
 
@@ -204,17 +208,38 @@ char* generate_data_string(float temperature, int lux, float humidity, uint16_t 
   char sensor_id[2] = "1";
   // FUCKING FIXME
   char timestamp[32] = "2019-11-29T13:21:01";
-  String tvoc_d = String(tvoc);
-  String co2_d = String(co2);
-  String lux_d = String(lux);
-  String humidity_d = String(humidity);
+  
+  String tvoc_str = "{\"type\": \"tvoc\", \"value\": ";
+  tvoc_str += tvoc;
+  tvoc_str += "},";
+  char tvoc_d[50];
+  tvoc_str.toCharArray(tvoc_d, 50);
+
+  String lux_str = "{\"type\": \"lux\", \"value\": ";
+  lux_str += lux;
+  lux_str += "},";
+  char lux_d[50];
+  lux_str.toCharArray(lux_d, 50);
+
+  String co2_str = "{\"type\": \"co2\", \"value\": ";
+  co2_str += co2;
+  co2_str += "},";
+  char co2_d[50];
+  co2_str.toCharArray(co2_d, 50);
+
+  String humidity_str = "{\"type\": \"humidity\", \"value\": ";
+  humidity_str += humidity;
+  humidity_str += "}";
+  char humidity_d[50];
+  humidity_str.toCharArray(humidity_d, 50);
+  
 //  get_iso_timestamp(timestamp);
 // FUCKING FIXME
   append_word(datum, "{\"sensor_id\": ");
   append_word(datum, sensor_id);
   append_word(datum, ", \"time\": \"");
   append_word(datum, timestamp);
-  append_word(datum, "\", \"data\": [")
+  append_word(datum, "\", \"data\": [");
 
   append_word(datum, "{\"type\": \"temperature\", \"value\": ");
   char temp[8];
@@ -222,13 +247,13 @@ char* generate_data_string(float temperature, int lux, float humidity, uint16_t 
   append_word(datum, temp);
   append_word(datum, "},");
 
-  append_word(datum, "{\"type\": \"tvoc\", \"value\": " + tvoc_d + "},");
+  append_word(datum, tvoc_d);
 
-  append_word(datum, "{\"type\": \"co2\", \"value\": " + co2_d + "},");
+  append_word(datum, co2_d);
 
-  append_word(datum, "{\"type\": \"lux\", \"value\": " + lux_d + "},");
+  append_word(datum, lux_d);
 
-  append_word(datum, "{\"type\": \"humidity\", \"value\": " + humidity_d + "}");
+  append_word(datum, humidity_d);
 
   append_word(datum, "]}");
   return datum;
@@ -241,7 +266,7 @@ char* get_iso_timestamp(char buf[]){
 }
 
 
-bool request_post(ESP8266Client client, String server, int port, String resource, String data){
+void request_post(ESP8266Client client, String server, int port, String resource, String data){
   String http_request = "POST";
   http_request += " " + resource + " HTTP/1.0\n";
   http_request += "Host: " + server + "\n";
@@ -255,26 +280,27 @@ bool request_post(ESP8266Client client, String server, int port, String resource
   char response[1024];
   char CLOSED[7] = "CLOSED";
   read_until(client, CLOSED, response);
+  client.stop();
   char status_char[4];
   strcpy(status_char, strstr(response, "HTTP/1.0") + 9); //set length so this is ok
   status_char[3] = '\0';
   int status_code;
   sscanf(status_char, "%d", &status_code);
-  Serial.println("Request Finished");
   if(status_code < 300 && status_code >= 200){
-    return true;
+    Serial.println(status_code);
+    return;
   } else {
-    return false;
+    Serial.println(response);
+    return;
   }
 }
 
 char* read_until(ESP8266Client client, char sentinel[], char response[]){
   int i = 0;
-  char collected[strlen(sentinel)] = "";
+  char collected[strlen(sentinel)] = "CLOSED";
   while(true){
       if (client.available()){
         char c = client.read();
-        Serial.print(c);
         response[i++] = c;
         scrolling_append(collected, c);
         if(strcmp(collected, sentinel) == 0){
