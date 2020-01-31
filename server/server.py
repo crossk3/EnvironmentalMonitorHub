@@ -60,6 +60,9 @@ def data_handler(data_type):
     time_end = query.pop('end', None)
     if time_end:
         time_end = datetime.fromisoformat(time_end)
+    latest = query.pop("latest", None)
+    if latest is not None:
+        return jsonify([d.to_dict() for d in storage_client.find(query).sort({"time": -1}).limit(1)])
     r = TimeRange(time_start, time_end) if time_start or time_end else None
     return jsonify([d.to_dict() for d in storage_client.find(query, r)])
 
