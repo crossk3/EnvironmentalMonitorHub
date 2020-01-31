@@ -40,6 +40,7 @@ def upload_data_handler(data_type):
     data = []
     for datum in body:
         datum['type'] = data_type
+        datum['time'] = datetime.now().isoformat()
         data.append(Datum.from_dict(datum))
     storage_client.insert(*data)
     return ''
@@ -70,7 +71,7 @@ def data_handler(data_type):
 @server.route('/data', methods=['POST'])
 def bulk_data_handler():
     body = request.json
-    time = body['time']
+    time = datetime.now().isoformat()
     sensor_id = body['sensor_id']
     data = [Datum.from_dict({**datum, 'time': time, 'sensor_id': sensor_id}) for datum in body['data']]
     storage_client.insert(*data)
