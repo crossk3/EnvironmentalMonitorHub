@@ -40,6 +40,7 @@ def upload_data_handler(data_type):
     data = []
     for datum in body:
         datum['type'] = data_type
+        datum['time'] = datetime.now().isoformat()
         data.append(Datum.from_dict(datum))
     storage_client.insert(*data)
     return ''
@@ -60,6 +61,9 @@ def data_handler(data_type):
     time_end = query.pop('end', None)
     if time_end:
         time_end = datetime.fromisoformat(time_end)
+    latest = query.pop("latest", False)
+    if latest:
+        return jsonify([d.to_dict() for d in storage_client.find(query).sort({"time": -1}).limit(1)])
     r = TimeRange(time_start, time_end) if time_start or time_end else None
     return jsonify([d.to_dict() for d in storage_client.find(query, r)])
 
@@ -67,7 +71,6 @@ def data_handler(data_type):
 @server.route('/data', methods=['POST'])
 def bulk_data_handler():
     body = request.json
-    # time = body['time']
     time = datetime.now().isoformat()
     sensor_id = body['sensor_id']
     data = [Datum.from_dict({**datum, 'time': time, 'sensor_id': sensor_id}) for datum in body['data']]
