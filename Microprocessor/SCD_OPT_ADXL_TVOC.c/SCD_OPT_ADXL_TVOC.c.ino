@@ -49,7 +49,7 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
 
 // how many minutes to delay between samples
-float sample_delay = 15;
+float sample_delay = 0*15;
 // start off with sending a sample
 int total_delay = int(sample_delay * 60 * 1000);
 
@@ -240,8 +240,8 @@ void loop() {
   //If so, have the sensor read and calculate the results.
   //Get them later
   ccs811.readAlgorithmResults();
-  uint16_t colortemp = readColourTemp();
-  Serial.print("Color Temp: "); Serial.println(colortemp, DEC);
+//  uint16_t colortemp = readColourTemp();
+//  Serial.print("Color Temp: "); Serial.println(colortemp, DEC);
   
   if(total_delay >= sample_delay*60*1000)
   {
@@ -257,7 +257,6 @@ void loop() {
     delay(sample_delay*59*1000);
     total_delay = (sample_delay*59*1000);
   }
-  Serial.println(sample_delay);
 }
 
 
