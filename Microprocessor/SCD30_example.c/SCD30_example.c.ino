@@ -1,4 +1,5 @@
 #include <i2c_t3.h>
+#include "Adafruit_TCS34725.h"
 
 //Click here to get the library: http://librarymanager/All#SparkFun_SCD30
 //#include <Wire.h>
@@ -11,6 +12,8 @@ int led = 13;
 int SDA_PIN = 18;
 int SCL_PIN = 19;
 SCD30 airSensor;
+
+Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
 void setup() {
   // put your setup code here, to run once:
@@ -37,11 +40,17 @@ void setup() {
         break;
     }
   Serial.println("SCD30 Example");
-  airSensor.begin();
-  pinMode(led, OUTPUT);
-  digitalWrite(led, HIGH);
-  airSensor.setAltitudeCompensation(241); //Set altitude of the sensor in m
-  airSensor.setMeasurementInterval(2);
+//  airSensor.begin();
+//  pinMode(led, OUTPUT);
+//  digitalWrite(led, HIGH);
+//  airSensor.setAltitudeCompensation(241); //Set altitude of the sensor in m
+//  airSensor.setMeasurementInterval(2);
+  if (tcs.begin(0x29, Wire)) {
+    Serial.println("Found sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+    while (1);
+  }
 }
 
 void loop() {

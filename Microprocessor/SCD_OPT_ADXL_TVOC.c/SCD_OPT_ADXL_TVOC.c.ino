@@ -1,4 +1,4 @@
-#include <i2c_t3.h>
+ #include <i2c_t3.h>
 
 //Click here to get the library: http://librarymanager/All#SparkFun_SCD30
 //#include <Wire.h>
@@ -13,6 +13,8 @@
 #include <TimeLib.h>
 #include <WiFiUdp.h>
 #include <time.h>
+#include <math.h>
+#include "Adafruit_TCS34725.h"
 //
 //uint8_t SCD30_I2C_ADDR = 0x61;
 //long SCD30_CONT_READ_MODE = 0x0010;
@@ -39,14 +41,15 @@ void sendNTPpacket(IPAddress &address);
 //////////////////
 // HTTP Strings //
 //////////////////
-const char destServer[] = "192.168.0.101";
+const char destServer[] = "192.168.0.100";
 
 
 ESP8266Client client;
+Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
 
 // how many minutes to delay between samples
-float sample_delay = (1/15);
+float sample_delay = 15;
 // start off with sending a sample
 int total_delay = int(sample_delay * 60 * 1000);
 
@@ -92,19 +95,33 @@ void setup() {
     Serial.println("Unable to communicate with the ESP8266 :(");
   // initializeESP8266() verifies communication with the WiFi
   // shield, and sets it up.
-  initializeESP8266();
+  //initializeESP8266();
 
   // connectESP8266() connects to the defined WiFi network.
-  connectESP8266();
-  displayConnectInfo();
-  
+  //connectESP8266();
+  //displayConnectInfo();
   pinMode(led, OUTPUT);
   digitalWrite(led, HIGH);
-  
+  //Serial.println("begin connection 2.0");
   configureLuxSensor(0x45);
-  configureAccelerometer(0x1D, RANGE_8G);
+  Serial.println("1");
+  configureAccelerometer(0x1D, RANGE_2G);
+  Serial.println("2");
   configureSCD30();
+  Serial.println("3");
   configureCCS811();
+  Serial.println("4");
+  configureTCSSensor(0x29);
+  Serial.println("5");
+  
+}
+
+void configureTCSSensor(uint8_t addr){
+  if (tcs.begin(addr, Wire)) {
+    Serial.println("Found sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+  }
 }
 
 void configureLuxSensor(uint8_t addr){
@@ -119,6 +136,13 @@ void configureLuxSensor(uint8_t addr){
     Serial.print("OPT3001: [ERROR] Code #");
     Serial.println(errorConfig);
   }
+}
+
+uint16_t readColourTemp(){
+  uint16_t r, g, b, c, colorTemp, lux;
+  tcs.getRawData(&r, &g, &b, &c);
+  colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
+  return colorTemp;
 }
 
 float readLuxSensor(){
@@ -151,34 +175,63 @@ void configureCCS811(){
     Serial.println("CCS811.begin() returned with an error.");
 }
 
+
+char datum[1024] = "";
+
 void loop() {
+  
   while(!airSensor.dataAvailable())
   {
     delay(50);
     total_delay += 50;
   }
+  //Serial.println("done loop");
   
   int lux = readLuxSensor();
   // currently just taking a basic average, we also need to think about this
   ADXL355_Result accel;
-  int xavg = 0;
-  int yavg = 0;
-  int zavg = 0;
-  int num_samples = 1000;
-  for(int i = 1; i <= num_samples; i++){
+  float xavg = 0;
+  float yavg = 0;
+  float zavg = 0;
+  int num_samples = 10;
+  int xs[num_samples];
+  int ys[num_samples];
+  int zs[num_samples];
+  for(int i = 0; i < num_samples; i++){
+    //Serial.println("start loop");
     accel = accelerometer.readResult();
-    xavg += accel.xdata;
-    yavg += accel.ydata;
-    zavg += accel.zdata;
-    delay(2000/num_samples);
+    //Serial.println("done");
+    xs[i] = accel.xdata  *3.9;//*pow(10,-6);
+    ys[i] = accel.ydata *3.9;//*pow(10,-6);
+    zs[i] = accel.zdata *3.9;//*pow(10,-6);
+    //Serial.println(accel.xdata);
+    //Serial.println(accel.ydata);
+    //Serial.println(accel.zdata);
+    xavg += accel.xdata  *3.9*pow(10,-6);
+    yavg += accel.ydata *3.9*pow(10,-6);
+    zavg += accel.zdata *3.9*pow(10,-6);
+    delay(7000/num_samples);
     total_delay += (2000/num_samples);
+    //Serial.println("start loop"); // Communication and setup successful
   }
-  Serial.print("xdata: ");
-  Serial.println(xavg/num_samples);
-  Serial.print("ydata: ");
-  Serial.println(yavg/num_samples);
-  Serial.print("zdata: ");
-  Serial.println(zavg/num_samples);
+  xavg = xavg/num_samples;
+  yavg = yavg/num_samples;
+  zavg = zavg/num_samples;
+//  Serial.print("xdata: ");
+//  Serial.printf("%6f",xavg);
+//  Serial.print("\nydata: ");
+//  Serial.printf("%6f",yavg);
+//  Serial.print("\nzdata: ");
+//  Serial.printf("%6f\n",zavg);
+//  for(int i = 0;i <num_samples;i++)
+//    Serial.printf("%d\n",xs[i]);
+//   Serial.printf("\n\n");
+//  for(int i = 0;i <num_samples;i++)
+//    Serial.printf("%d\n",ys[i]);
+//  Serial.printf("\n\n");
+//  for(int i = 0;i <num_samples;i++)
+//    Serial.printf("%d\n",zs[i]);
+  
   while (!ccs811.dataAvailable())
   {
     delay(2);
@@ -187,12 +240,16 @@ void loop() {
   //If so, have the sensor read and calculate the results.
   //Get them later
   ccs811.readAlgorithmResults();
+  uint16_t colortemp = readColourTemp();
+  Serial.print("Color Temp: "); Serial.println(colortemp, DEC);
+  
   if(total_delay >= sample_delay*60*1000)
   {
     Serial.println("Uploading Sample");
-    char datum[256];
+    datum[0] = "\0";
     generate_data_string(airSensor.getTemperature(), lux, airSensor.getHumidity(), ccs811.getTVOC(), airSensor.getCO2(), datum);
     strcpy(datum, strstr(datum, "{\"sensor"));
+    Serial.flush();
     request_post(client, destServer, 8080, "/data", datum);
     Serial.print("Sent! Waiting for ");
     Serial.print(sample_delay*59*1000);
@@ -206,56 +263,54 @@ void loop() {
 
 char* generate_data_string(float temperature, int lux, float humidity, uint16_t tvoc, uint16_t co2, char datum[]){
   char sensor_id[2] = "1";
-  // FUCKING FIXME
+  // FIXME
   char timestamp[32] = "2019-11-29T13:21:01";
   
-  String tvoc_str = "{\"type\": \"tvoc\", \"value\": ";
-  tvoc_str += tvoc;
-  tvoc_str += "},";
-  char tvoc_d[50];
-  tvoc_str.toCharArray(tvoc_d, 50);
+  char tvoc_str[50] = "{\"type\": \"tvoc\", \"value\": ";
+  char tvoc_d[8];
+  sprintf(tvoc_d, "%u", tvoc);
+  strcat(tvoc_str, tvoc_d);
+  strcat(tvoc_str, "},");
 
-  String lux_str = "{\"type\": \"lux\", \"value\": ";
-  lux_str += lux;
-  lux_str += "},";
-  char lux_d[50];
-  lux_str.toCharArray(lux_d, 50);
+  char lux_str[50] = "{\"type\": \"lux\", \"value\": ";
+  char lux_d[16];
+  sprintf(lux_d, "%i", lux);
+  strcat(lux_str, lux_d);
+  strcat(lux_str, "},");
 
-  String co2_str = "{\"type\": \"co2\", \"value\": ";
-  co2_str += co2;
-  co2_str += "},";
-  char co2_d[50];
-  co2_str.toCharArray(co2_d, 50);
+  char co2_str[50] = "{\"type\": \"co2\", \"value\": ";
+  char co2_d[16];
+  sprintf(co2_d, "%u", co2);
+  strcat(co2_str, co2_d);
+  strcat(co2_str, "},");
 
-  String humidity_str = "{\"type\": \"humidity\", \"value\": ";
-  humidity_str += humidity;
-  humidity_str += "}";
-  char humidity_d[50];
-  humidity_str.toCharArray(humidity_d, 50);
-  
-//  get_iso_timestamp(timestamp);
-// FUCKING FIXME
-  append_word(datum, "{\"sensor_id\": ");
-  append_word(datum, sensor_id);
-  append_word(datum, ", \"time\": \"");
-  append_word(datum, timestamp);
-  append_word(datum, "\", \"data\": [");
+  char humidity_str[50] = "{\"type\": \"humidity\", \"value\": ";
+  char humidity_d[16];
+  sprintf(humidity_d, "%u", humidity);
+  strcat(humidity_str, humidity_d);
+  strcat(humidity_str, "}");
 
-  append_word(datum, "{\"type\": \"temperature\", \"value\": ");
+  strcat(datum, "{\"sensor_id\": ");
+  strcat(datum, sensor_id);
+  strcat(datum, ", \"time\": \"");
+  strcat(datum, timestamp);
+  strcat(datum, "\", \"data\": [");
+//  append_word(datum, "{\"sensor_id\": ");
+//  append_word(datum, sensor_id);
+//  append_word(datum, ", \"time\": \"");
+//  append_word(datum, timestamp);
+//  append_word(datum, "\", \"data\": [");
+
+  strcat(datum, "{\"type\": \"temperature\", \"value\": ");
   char temp[8];
-  dtostrf(temperature, 4, 1, temp) ;
-  append_word(datum, temp);
-  append_word(datum, "},");
-
-  append_word(datum, tvoc_d);
-
-  append_word(datum, co2_d);
-
-  append_word(datum, lux_d);
-
-  append_word(datum, humidity_d);
-
-  append_word(datum, "]}");
+  dtostrf(temperature, 4, 1, temp);
+  strcat(datum, temp);
+  strcat(datum, "},");
+  strcat(datum, tvoc_str);
+  strcat(datum, co2_str);
+  strcat(datum, lux_str);
+  strcat(datum, humidity_str);
+  strcat(datum, "]}");
   return datum;
 }
 
@@ -266,15 +321,32 @@ char* get_iso_timestamp(char buf[]){
 }
 
 
-void request_post(ESP8266Client client, String server, int port, String resource, String data){
-  String http_request = "POST";
-  http_request += " " + resource + " HTTP/1.0\n";
-  http_request += "Host: " + server + "\n";
-  http_request += "Content-Type: application/json\n";
-  http_request += "Content-Length: " + (String)data.length() + (String)" \n";
-  http_request += "Connection: close\n\n";
-  http_request += data;
-  http_request += "\n\n";
+void request_post(ESP8266Client client, char* server, int port, char* resource, char* data){
+  char http_request[1024] = "POST";
+//  http_request += " " + resource + " HTTP/1.0\n";
+  strcat(http_request, " ");
+  strcat(http_request, resource);
+  strcat(http_request, " HTTP/1.0\n");
+
+//  http_request += "Host: " + server + "\n";
+  strcat(http_request, "Host: ");
+  strcat(http_request, server);
+  strcat(http_request, "\n");
+
+  strcat(http_request, "Content-Type: application/json\n");
+  strcat(http_request, "Content-Length: ");
+  char data_len[12];
+  sprintf(data_len, "%u", strlen(data));
+  strcat(http_request, data_len);
+  strcat(http_request, " \nConnection: close\n\n");
+  strcat(http_request, data);
+  strcat(http_request, "\n\n");
+//  http_request += "Content-Type: application/json\n";
+//  http_request += "Content-Length: " + (String)data.length() + (String)" \n";
+//  http_request += "Connection: close\n\n";
+//  http_request += data;
+//  http_request += "\n\n";
+//  Serial.println(http_request);
   int retVal = client.connect(server, port);
   client.print(http_request);
   char response[1024];
@@ -298,16 +370,17 @@ void request_post(ESP8266Client client, String server, int port, String resource
 char* read_until(ESP8266Client client, char sentinel[], char response[]){
   int i = 0;
   char collected[strlen(sentinel)] = "CLOSED";
+  char *s;
   while(true){
       if (client.available()){
         char c = client.read();
         response[i++] = c;
-        scrolling_append(collected, c);
-        if(strcmp(collected, sentinel) == 0){
+        s = strstr(response, "CLOSED");
+        if(s != NULL){
           response[i++] = '\0';
           return response;
         }
-    }
+      }
   }
 }
 
