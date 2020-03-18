@@ -5,7 +5,7 @@ import android.text.style.ForegroundColorSpan;
 import hansonstudio.com.myapplication.ServerCommunication;
 import hansonstudio.com.myapplication.Values.Colours;
 
-public class Temperature extends SensorClass{
+public class Co2 extends SensorClass{
 
     @Override
     public void onResume(){
@@ -16,7 +16,7 @@ public class Temperature extends SensorClass{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        CreateTitle("Temperature");
+        CreateTitle("CO₂ Concentration");
         OnRefreshButtonClick(new Runnable() {
             @Override
             public void run() {
@@ -27,13 +27,13 @@ public class Temperature extends SensorClass{
 
     private void refresh()
     {
-        SpannableString tempString = new SpannableString("Latest Temperature Reading\n" +
-                ServerCommunication.GetLatestReading(StringKeys.temperature) + "°C");
+        SpannableString tempString = new SpannableString("Latest CO₂ Reading\n" +
+                ServerCommunication.GetLatestReading(StringKeys.co2) + " ppm");
         tempString.setSpan(
                 new ForegroundColorSpan(
-                        Colours.getThresholdColour(ServerCommunication.GetLatestReading(StringKeys.temperature),
-                        Thresholds.temperatureLower, Thresholds.temperatureUpper)),
-                26,tempString.length(), 0);
-        refreshView(tempString, StringKeys.temperature);
+                        Colours.getThresholdColour(ServerCommunication.GetLatestReading(StringKeys.co2),
+                                0, Thresholds.co2)),
+                19,tempString.length(), 0);
+        refreshView(tempString, StringKeys.co2);
     }
 }
