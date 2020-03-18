@@ -7,9 +7,9 @@ import android.widget.RelativeLayout;
 import java.util.concurrent.Callable;
 
 public class BinaryIcon extends DiagnosticIcon implements Callable<Void> {
-    public BinaryIcon(Context context, RelativeLayout layout, String icon, String text, Point location)
+    public BinaryIcon(Context context, RelativeLayout layout,final Class activityClass, String icon, String text, Point location)
     {
-        super(context, layout, icon, text, location);
+        super(context, layout, activityClass, icon, text, location);
     }
 
 

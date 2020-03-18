@@ -3,6 +3,7 @@ package hansonstudio.com.myapplication;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
+import android.graphics.drawable.GradientDrawable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -23,12 +24,14 @@ public class ViewLayout extends AppCompatActivity {
     public static RelativeLayout ActivitySetup(Context context, RelativeLayout mainLayout)
     {
         ScrollView scrollView = new ScrollView(context);
-        scrollView.setBackgroundColor(Colours.appBackground);
+        GradientDrawable gd = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[] {Colours.backgroundLight, Colours.backgroundDark});
+        gd.setCornerRadius(0f);
+        scrollView.setBackground(gd);
         mainLayout.addView(scrollView);
         RelativeLayout myLayout = new RelativeLayout(context);
         scrollView.addView(myLayout);
 
-        myLayout.setBackgroundColor(Colours.appBackground);
+        //myLayout.setBackground(gd);
         Display display = ((Activity)context).getWindowManager().getDefaultDisplay();
         DisplayMetrics outMetrics = new DisplayMetrics ();
         display.getMetrics(outMetrics);
@@ -49,12 +52,12 @@ public class ViewLayout extends AppCompatActivity {
 
     }
 
-    public static int getScreenWidth()
+    public static int screenWidth()
     {
         return screenWidth;
     }
 
-    public static int getScreenHeight()
+    public static int screenHeight()
     {
         return screenHeight;
     }

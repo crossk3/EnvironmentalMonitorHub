@@ -9,9 +9,9 @@ import java.util.concurrent.Callable;
 
 public class SafetyIcon extends DiagnosticIcon implements Callable<Void> {
 
-    public SafetyIcon(Context context, RelativeLayout layout, String icon, String text, Point location)
+    public SafetyIcon(Context context, RelativeLayout layout, Class activityClass, String icon, String text, Point location)
     {
-        super(context, layout, icon, text, location);
+        super(context, layout, activityClass, icon, text, location);
     }
 
     @Override

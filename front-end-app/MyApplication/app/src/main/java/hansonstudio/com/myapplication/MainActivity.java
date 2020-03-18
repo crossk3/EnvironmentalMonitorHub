@@ -1,31 +1,24 @@
 package hansonstudio.com.myapplication;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Point;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.RelativeLayout;
 
-import hansonstudio.com.myapplication.SensorClasses.Temperature;
-import hansonstudio.com.myapplication.Values.UnicodeIcons;
+import hansonstudio.com.myapplication.SensorClasses.StringKeys;
+import hansonstudio.com.myapplication.Values.TextSizes;
 
 public class MainActivity extends AppCompatActivity {
 
     private RelativeLayout myLayout;
-
-    private TextElement tvoc;
-    private TextElement co2;
-    private TextElement particleDetector;
-
-    private TextElement humidity;
+    private TextElement status;
+    private TextElement airQuality;
     private TextElement temperature;
-
-    private TextElement light;
-    private TextElement sound;
-    private TextElement acceleration;
-
-    private TextElement systemStatus;
-
+    private TextElement latestReading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,90 +29,77 @@ public class MainActivity extends AppCompatActivity {
         myLayout = ViewLayout.ActivitySetup(this, mainLayout);
 
         TextElement title = new TextElement(this, myLayout, "Environmental Monitoring System",
-                new Point(0,ViewLayout.getScreenHeight()/100), new Point(ViewLayout.getScreenWidth(), -2));
+                new Point(0,ViewLayout.screenHeight()/100), new Point(ViewLayout.screenWidth(), -2));
         title.makeTitle();
-
-        final int iconTopMargin = ViewLayout.getScreenHeight() / 6;
-        createHealthIcons(iconTopMargin);
-        createScaleIcons(iconTopMargin);
-        createBinaryIcons(iconTopMargin);
-        createSystemStatusIcon(iconTopMargin);
+        createBasicDiagnostics();
+        createDiagnosticPageButton(this);
     }
 
-    public void createHealthIcons(int iconTopMargin)
+    private void createBasicDiagnostics()
     {
-        tvoc = new SafetyIcon(
+        int topMargin = ViewLayout.screenHeight() / 5;
+        int margin = ViewLayout.getMargin() * 6;
+        status = new TextElement(
                 this,
                 myLayout,
-                UnicodeIcons.gasses,
-                "TVOC",
-                new Point(ViewLayout.getIconMargin(),iconTopMargin));
-
-        co2 = new SafetyIcon(
-                this,
-                myLayout,
-                UnicodeIcons.factory,
-                "CO\u2082",
-                new Point(ViewLayout.getIconMargin() * 2 + ViewLayout.getDiagnosticIconSize().x,iconTopMargin));
-
-        particleDetector = new SafetyIcon(
-                this,
-                myLayout,
-                UnicodeIcons.dust,
-                " Air Particles",
-                new Point(ViewLayout.getIconMargin() * 3 + 2* ViewLayout.getDiagnosticIconSize().x,iconTopMargin));
-    }
-
-    public void createScaleIcons(int iconTopMargin)
-    {
-        humidity = new ScaleIcon(
-                this,
-                myLayout,
-                UnicodeIcons.rainDrop,
-                "Humidity",
-                new Point(ViewLayout.getIconMargin(),iconTopMargin + ViewLayout.getIconMargin() + ViewLayout.getDiagnosticIconSize().x));
-
-        temperature = new ScaleIcon(
-                this,
-                myLayout,
-                Temperature.class,
-                UnicodeIcons.thermometer,
-                "Temperature",
-                new Point(ViewLayout.getIconMargin() * 2 + ViewLayout.getDiagnosticIconSize().x,iconTopMargin + ViewLayout.getIconMargin() + ViewLayout.getDiagnosticIconSize().x));
-    }
-
-    public void createBinaryIcons(int iconTopMargin)
-    {
-        light = new BinaryIcon(
-                this,
-                myLayout,
-                UnicodeIcons.lightBulb,
-                "Light",
-                new Point(ViewLayout.getIconMargin(),iconTopMargin + 2 * ViewLayout.getIconMargin() + 2 * ViewLayout.getDiagnosticIconSize().x));
-
-        sound = new BinaryIcon(
-                this,
-                myLayout,
-                UnicodeIcons.microphone,
-                "Sound",
-                new Point(ViewLayout.getIconMargin() * 2 + ViewLayout.getDiagnosticIconSize().x,iconTopMargin + 2 * ViewLayout.getIconMargin() + 2 * ViewLayout.getDiagnosticIconSize().x));
-
-        acceleration = new BinaryIcon(
-                this,
-                myLayout,
-                UnicodeIcons.acceleration,
-                "Acceleration",
-                new Point(ViewLayout.getIconMargin() * 3 + 2 * ViewLayout.getDiagnosticIconSize().x,iconTopMargin + 2 * ViewLayout.getIconMargin() + 2 * ViewLayout.getDiagnosticIconSize().x));
-    }
-
-    public void createSystemStatusIcon(int iconTopMargin)
-    {
-        systemStatus = new BinaryIcon(
-                this,
-                myLayout,
-                UnicodeIcons.power,
                 "System Status",
-                new Point(ViewLayout.getIconMargin() * 3 + 2 * ViewLayout.getDiagnosticIconSize().x,iconTopMargin + 3 * ViewLayout.getIconMargin() + 3 * ViewLayout.getDiagnosticIconSize().x));
+                new Point(0,topMargin),
+                new Point(-1, -2));
+
+        airQuality = new TextElement(
+                this,
+                myLayout,
+                "Air Quality",
+                new Point(0,topMargin + margin),
+                new Point(-1, -2));
+
+        temperature = new TextElement(
+                this,
+                myLayout,
+                "Temperature: " + ServerCommunication.GetLatestReading(StringKeys.temperature) + "°C",
+                new Point(0,topMargin + 2 * margin),
+                new Point(-1, -2));
+
+        latestReading = new TextElement(
+                this,
+                myLayout,
+                "Latest Time Reading: \n" + ServerCommunication.getLatestTimeFromServer(),
+                new Point(0,topMargin + 3 * margin),
+                new Point(-1, -2));
+
+        status.element.setTextSize(TextSizes.medium());
+        airQuality.element.setTextSize(TextSizes.medium());
+        temperature.element.setTextSize(TextSizes.medium());
+        latestReading.element.setTextSize(TextSizes.medium());
     }
+
+    private void createDiagnosticPageButton(final Context context)
+    {
+        TextElement showDiagnostics = new TextElement(context, myLayout, "Go to Diagnostics Page",
+                new Point(ViewLayout.screenWidth()/5, 4*ViewLayout.screenHeight()/5), new Point(3*ViewLayout.screenWidth()/5,-1));
+        showDiagnostics.makeButtonStyle();
+        showDiagnostics.element.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, DiagnosticActivity.class);
+                context.startActivity(intent);
+            }
+
+        });
+    }
+
+
+
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        ServerCommunication.showSystemStatus(this, status, false, false);
+        ServerCommunication.setAirQualityBinary(airQuality);
+    }
+
+
 
 }
