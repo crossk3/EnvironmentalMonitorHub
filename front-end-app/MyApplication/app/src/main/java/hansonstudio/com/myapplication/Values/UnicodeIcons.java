@@ -22,4 +22,5 @@ public class UnicodeIcons {
     //Utilities
     public static String settings = "\u2699";
     public static String refresh = "\u21ba";
+    public static String back = "\u2190";
 }

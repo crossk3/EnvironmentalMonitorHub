@@ -4,6 +4,9 @@ import android.graphics.Color;
 
 public class Colours {
     public static final int appBackground = Color.rgb(180,230,255);
+    public static final int backgroundLight = Color.rgb(200,240,255);
+    public static final int backgroundDark = Color.rgb(160,210,225);
+    public static final int disabled = Color.rgb(162,207,255);
     public static final int text = Color.rgb(0,0,90);
     public static final int ganttChartBlue = Color.rgb(6,172,250);
 
@@ -24,7 +27,7 @@ public class Colours {
     /*function to input a temperature in Kelvin and return the colour
     corresponding to the blackbody radiation of an object at that temperature
      */
-    public Color getColor(int temp){
+    public int getColor(int temp){
         //initialize red green and blue values
         int r = 0;
         int g = 0;
@@ -87,8 +90,8 @@ public class Colours {
             b = 255;
             a = 255;
         }
-            Color colr = new Color(r,g,b,a);
-            return colr;
+
+        return Color.argb(r,g,b,a);
     }
 
 }

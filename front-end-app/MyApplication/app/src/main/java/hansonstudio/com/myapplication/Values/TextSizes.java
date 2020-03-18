@@ -7,7 +7,7 @@ public class TextSizes {
     public static int small()
     {
         float density = ViewLayout.getPixelDensity();
-        int screenWidth = ViewLayout.getScreenWidth();
+        int screenWidth = ViewLayout.screenWidth();
         if (density<=2)
         {
             return (int) (screenWidth*0.012+8);
@@ -21,7 +21,7 @@ public class TextSizes {
     public static int large()
     {
         float density = ViewLayout.getPixelDensity();
-        int screenWidth = ViewLayout.getScreenWidth();
+        int screenWidth = ViewLayout.screenWidth();
         if (density<=2)
         {
             return ((int)(screenWidth*0.025+20));
